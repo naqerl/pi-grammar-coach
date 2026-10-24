@@ -80,7 +80,7 @@ export default function (pi: any) {
     },
   });
 
-  pi.on("input", async (event: any, ctx: any) => {
+  pi.on("input", (event: any, ctx: any) => {
     if (event.source !== "interactive") return;
     if (!ctx.hasUI || ctx.mode !== "tui") return;
 
@@ -91,6 +91,8 @@ export default function (pi: any) {
     abort?.abort();
     abort = new AbortController();
     const signal = abort.signal;
+
+    void (async () => {
 
     const log = (msg: string) => {
       try {
@@ -179,5 +181,6 @@ export default function (pi: any) {
         return c;
       });
     }
+    })();
   });
 };
