@@ -121,8 +121,9 @@ export default function (pi: any) {
       const prompt = [
         "You are an English writing coach for software engineers.",
         `Rewrite the user's message as one corrected sentence in a ${style}, tech-professional tone.`,
-        "If it is already correct, return it unchanged.",
-        "Output ONLY the corrected sentence. No explanations, no extra lines.",
+        "Focus on grammar and how the sentence is formulated; ignore punctuation, casing, and trailing punctuation.",
+        "If it is already correct, output exactly: OK",
+        "Otherwise output ONLY the corrected sentence. No explanations, no extra lines.",
         "",
         "Message:",
         text,
@@ -134,23 +135,39 @@ export default function (pi: any) {
 
       if (signal.aborted) return;
 
-      const reply = (msg.content ?? [])
+      let reply = (msg.content ?? [])
         .filter((p: any) => p.type === "text")
         .map((p: any) => p.text)
         .join(" ")
         .trim()
         .replace(/\s+/g, " ");
+      // Drop a trailing period (user doesn't want the trailing dot).
+      reply = reply.replace(/\.$/, "").trim();
 
-      if (!reply) {
-        log("empty reply");
+      if (!reply || /^ok\.?$/i.test(reply)) {
+        log("no correction needed");
         ctx.ui.setWidget(WIDGET_KEY, undefined);
         return;
+      }
+
+      // Highlight the words that actually changed (same word count only).
+      const origWords = text.split(/\s+/);
+      const corrWords = reply.split(/\s+/);
+      const changed = new Set<number>();
+      if (origWords.length === corrWords.length && origWords.length > 0) {
+        for (let i = 0; i < corrWords.length; i++) {
+          if (corrWords[i].toLowerCase() !== (origWords[i] || "").toLowerCase()) changed.add(i);
+        }
       }
 
       log("reply=" + JSON.stringify(reply));
       ctx.ui.setWidget(WIDGET_KEY, (_tui: any, theme: any) => {
         const c = new Container();
-        c.addChild(new Text(`${theme.fg("accent", "✏")} ${reply}`, 1, 0));
+        const segs: string[] = [theme.fg("accent", "✏")];
+        corrWords.forEach((w, i) => {
+          segs.push(changed.has(i) ? theme.fg("error", w) : w);
+        });
+        c.addChild(new Text(segs.join(" "), 1, 0));
         return c;
       });
     } catch (err: any) {
