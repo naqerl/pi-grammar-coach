@@ -124,9 +124,9 @@ export default function (pi: any) {
         "You are an English writing coach for software engineers.",
         `Rewrite the user's message as one corrected sentence in a ${style}, tech-professional tone.`,
         "Focus on grammar and how the sentence is formulated; ignore punctuation, casing, and trailing punctuation.",
-        "Output format: first line = comma-separated 1-2 word tags of the issues (or 'none' if already correct).",
-        "Second line = the corrected sentence. If already correct, output exactly: OK",
-        "No explanations, no extra lines.",
+        "Return STRICT JSON only, no code fences, no prose:",
+        '{"tags":["1-2 word issue","..."],"sentence":"corrected sentence"}',
+        'Use an empty tags array and exactly "OK" as the sentence if the message is already correct.',
         "",
         "Message:",
         text,
@@ -150,12 +150,30 @@ export default function (pi: any) {
         return;
       }
 
-      const lines = raw.split(/\n/).map((l: string) => l.trim()).filter(Boolean);
-      const tags = (lines[0] || "").replace(/^tags:\s*/i, "").trim();
-      let sentence = (lines.slice(1).join(" ") || "").trim();
+      // Preferred: strict JSON {tags:[...], sentence:"..."}. Fallback: first line tags, rest sentence.
+      let tags = "";
+      let sentence = "";
+      const jsonStart = raw.indexOf("{");
+      const jsonEnd = raw.lastIndexOf("}");
+      if (jsonStart !== -1 && jsonEnd > jsonStart) {
+        try {
+          const obj = JSON.parse(raw.slice(jsonStart, jsonEnd + 1));
+          if (Array.isArray(obj?.tags)) tags = obj.tags.map((t: any) => String(t).trim()).filter(Boolean).join(", ");
+          if (typeof obj?.sentence === "string") sentence = obj.sentence.trim();
+        } catch {}
+      }
+      if (!sentence) {
+        const lines = raw.split(/\n/).map((l: string) => l.trim()).filter(Boolean);
+        if (lines.length > 1) {
+          tags = (lines[0] || "").replace(/^tags:\s*/i, "").trim();
+          sentence = lines.slice(1).join(" ").trim();
+        } else {
+          sentence = lines[0] || "";
+        }
+      }
       // Drop a trailing period (user doesn't want the trailing dot).
       sentence = sentence.replace(/\.$/, "").trim();
-      if (!sentence) { log("no correction needed"); ctx.ui.setWidget(WIDGET_KEY, undefined); return; }
+      if (!sentence || /^ok\.?$/i.test(sentence)) { log("no correction needed"); ctx.ui.setWidget(WIDGET_KEY, undefined); return; }
 
       const reply = sentence;
 
@@ -169,7 +187,7 @@ export default function (pi: any) {
         }
       }
 
-      log("reply=" + JSON.stringify(reply));
+      log("tags=" + JSON.stringify(tags) + " reply=" + JSON.stringify(reply));
       ctx.ui.setWidget(WIDGET_KEY, (_tui: any, theme: any) => {
         const c = new Container();
         if (tags && tags.toLowerCase() !== "none") {
