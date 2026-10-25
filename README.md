@@ -1,6 +1,6 @@
 # pi-grammar-coach
 
-<img width="920" height="944" alt="Four pi prompts with grammar-coach corrections: a misspelling, a casual contraction, a formal rewrite, and a saved name" src="https://github.com/user-attachments/assets/e00b226d-444d-4ed6-91f0-dfb1efde502e" />
+<img width="892" height="684" alt="Four pi prompts on the default theme. The editor still shows the original wording, with the correction above it: a misspelling, a casual contraction, a formal rewrite, and a saved name" src="https://github.com/user-attachments/assets/65d4c7bc-6870-401d-8e7e-d6d07575f331" />
 
 See a grammar fix for the prompt you just sent, keep names and commands spelled your way, and save the real mistakes for later review.
 
