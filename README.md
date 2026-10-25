@@ -2,7 +2,31 @@
 
 <img width="670" height="170" alt="image" src="https://github.com/user-attachments/assets/9a58f0b4-8b71-4933-beb4-68196adebd2b" />
 
-Pi extension that checks the grammar of a prompt after you send it. A line above the editor shows the issue words and a corrected version, with the changed words highlighted. Casual style keeps your tone. Formal style uses a tech-professional tone.
+See a grammar fix for the prompt you just sent, keep names and commands spelled your way, and save the real mistakes for later review.
+
+## What you can do
+
+**See the correction.** Send a prompt. A line above the editor shows the issue words and a corrected version, with the changed words highlighted. Casual style keeps your tone. Formal style uses a tech-professional tone.
+
+**Keep a spelling.** When a name, product, or command gets rewritten (`zeroshot` becomes `zero-shot`):
+
+```sh
+/grammar dict add zeroshot
+```
+
+Or ask the agent to add it. The agent calls `grammar_dictionary`.
+
+**Pick a tone or a model.**
+
+```sh
+/grammar casual
+/grammar formal
+/grammar model <provider/id>
+/grammar model default
+/grammar status
+```
+
+**Review mistakes later.** Each real correction stores a tagged list of the actual errors in `~/.pi/agent/grammar-coach.db` for review and flashcard generation.
 
 ## Install
 
@@ -21,9 +45,20 @@ cp extensions/grammar-coach.ts ~/.pi/agent/extensions/
 
 If both the package and that copied file are installed, Pi loads the coach twice. Use one.
 
+## Details
+
 The check runs from an input hook when you send a prompt. `/grammar` is a command you type in the editor.
 
-## Agent tool
+### Commands
+
+- `/grammar casual` / `/grammar formal`
+- `/grammar model <provider/id>` or `/grammar model default`
+- `/grammar dict`, `/grammar dict add <word or phrase>`, `/grammar dict remove <word or phrase>`
+- `/grammar status`
+
+`/grammar model` warns when that id is not in the model list. `/grammar dict` uses the same dictionary as `grammar_dictionary`.
+
+### Agent tool
 
 The running agent receives one tool, `grammar_dictionary`. It adds, removes, or lists spellings the coach must leave unchanged.
 
@@ -34,25 +69,10 @@ The running agent receives one tool, `grammar_dictionary`. It adds, removes, or 
 
 While the tool is active, the agent's prompt gets the snippet "Save spellings the grammar coach must not change" and a guideline: when you say a correction rewrote a name, product, command, or other correct spelling, call `grammar_dictionary` with `action` `add` and that exact phrase.
 
-## Commands
+### Dictionary
 
-- `/grammar casual` / `/grammar formal`
-- `/grammar model <provider/id>` or `/grammar model default`
-- `/grammar dict`, `/grammar dict add <word or phrase>`, `/grammar dict remove <word or phrase>`
-- `/grammar status`
+Matching is case-insensitive. A longer phrase wins over a shorter one, so `pi coding` stays whole when `pi` is also saved. The coach hides those spellings from the checker and puts your original form back if the checker still rewrites them (`zero-shot` or `zero shot`). Those rewrites are left out of the error log.
 
-`/grammar model` warns when that id is not in the model list. `/grammar dict` uses the same dictionary as `grammar_dictionary`.
+### Error log
 
-## Dictionary
-
-Names, products, and commands sometimes get rewritten (`zeroshot` becomes `zero-shot`). Add the spelling you want kept:
-
-```sh
-/grammar dict add zeroshot
-```
-
-You can also ask the agent to add it. The agent then calls `grammar_dictionary`. Matching is case-insensitive. The coach hides those spellings from the checker and puts your original form back if the checker still rewrites them (`zero-shot` or `zero shot`). Those rewrites are left out of the error log.
-
-## Error log
-
-Each real correction also asks the model for a tagged list of the actual mistakes (`tag`, the `wrong` span, and the `fix`). That list is not shown in the editor. It is appended to `~/.pi/agent/grammar-coach.db` in the `errors` table (`created_at`, `style`, `tag`, `wrong`, `fix`, `original`, `corrected`) for later review and flashcard generation. Protected dictionary spellings are not stored. The `dictionary` table in the same file holds the saved phrases.
+The editor line stays the short correction. The model also returns each mistake as `tag`, the `wrong` span, and the `fix`. Those rows are appended to `~/.pi/agent/grammar-coach.db` in the `errors` table (`created_at`, `style`, `tag`, `wrong`, `fix`, `original`, `corrected`). Protected dictionary spellings are left out. The `dictionary` table in the same file holds the saved phrases.
