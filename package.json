@@ -1,6 +1,6 @@
 {
   "name": "pi-grammar-coach",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Pi extension that shows a grammar correction for the prompt you just sent.",
   "keywords": ["pi-package"],
   "type": "module",
