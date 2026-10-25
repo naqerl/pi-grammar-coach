@@ -124,8 +124,9 @@ export default function (pi: any) {
         "You are an English writing coach for software engineers.",
         `Rewrite the user's message as one corrected sentence in a ${style}, tech-professional tone.`,
         "Focus on grammar and how the sentence is formulated; ignore punctuation, casing, and trailing punctuation.",
-        "If it is already correct, output exactly: OK",
-        "Otherwise output ONLY the corrected sentence. No explanations, no extra lines.",
+        "Output format: first line = comma-separated 1-2 word tags of the issues (or 'none' if already correct).",
+        "Second line = the corrected sentence. If already correct, output exactly: OK",
+        "No explanations, no extra lines.",
         "",
         "Message:",
         text,
@@ -137,20 +138,26 @@ export default function (pi: any) {
 
       if (signal.aborted) return;
 
-      let reply = (msg.content ?? [])
+      let raw = (msg.content ?? [])
         .filter((p: any) => p.type === "text")
         .map((p: any) => p.text)
-        .join(" ")
-        .trim()
-        .replace(/\s+/g, " ");
-      // Drop a trailing period (user doesn't want the trailing dot).
-      reply = reply.replace(/\.$/, "").trim();
+        .join("\n")
+        .trim();
 
-      if (!reply || /^ok\.?$/i.test(reply)) {
+      if (!raw || /^ok\.?$/i.test(raw)) {
         log("no correction needed");
         ctx.ui.setWidget(WIDGET_KEY, undefined);
         return;
       }
+
+      const lines = raw.split(/\n/).map((l: string) => l.trim()).filter(Boolean);
+      const tags = (lines[0] || "").replace(/^tags:\s*/i, "").trim();
+      let sentence = (lines.slice(1).join(" ") || "").trim();
+      // Drop a trailing period (user doesn't want the trailing dot).
+      sentence = sentence.replace(/\.$/, "").trim();
+      if (!sentence) { log("no correction needed"); ctx.ui.setWidget(WIDGET_KEY, undefined); return; }
+
+      const reply = sentence;
 
       // Highlight the words that actually changed (same word count only).
       const origWords = text.split(/\s+/);
@@ -165,6 +172,9 @@ export default function (pi: any) {
       log("reply=" + JSON.stringify(reply));
       ctx.ui.setWidget(WIDGET_KEY, (_tui: any, theme: any) => {
         const c = new Container();
+        if (tags && tags.toLowerCase() !== "none") {
+          c.addChild(new Text(theme.fg("dim", "tags: " + tags), 1, 0));
+        }
         const segs: string[] = [theme.fg("accent", "✏")];
         corrWords.forEach((w, i) => {
           segs.push(changed.has(i) ? theme.fg("error", w) : w);
