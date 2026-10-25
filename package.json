@@ -1,0 +1,15 @@
+{
+  "name": "pi-grammar-coach",
+  "version": "0.1.0",
+  "description": "Pi extension that shows a grammar correction for the prompt you just sent.",
+  "keywords": ["pi-package"],
+  "type": "module",
+  "peerDependencies": {
+    "@earendil-works/pi-ai": "*",
+    "@earendil-works/pi-coding-agent": "*",
+    "@earendil-works/pi-tui": "*"
+  },
+  "pi": {
+    "extensions": ["./extensions/grammar-coach.ts"]
+  }
+}
