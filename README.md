@@ -1,6 +1,6 @@
 # pi-grammar-coach
 
-<img width="670" height="170" alt="image" src="https://github.com/user-attachments/assets/9a58f0b4-8b71-4933-beb4-68196adebd2b" />
+<img width="920" height="944" alt="Four pi prompts with grammar-coach corrections: a misspelling, a casual contraction, a formal rewrite, and a saved name" src="https://github.com/user-attachments/assets/e00b226d-444d-4ed6-91f0-dfb1efde502e" />
 
 See a grammar fix for the prompt you just sent, keep names and commands spelled your way, and save the real mistakes for later review.
 
